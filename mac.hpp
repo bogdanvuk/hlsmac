@@ -16,6 +16,6 @@ typedef struct{
 	ap_uint<1> last;
 }t_axis;
 
-void mac( hls::stream<t_gmii> &gmii, hls::stream<t_axis> &m_axis );
+void mac(t_gmii gmii, hls::stream<t_axis> &m_axis );
 
 #endif
