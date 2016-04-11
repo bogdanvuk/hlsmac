@@ -1,14 +1,17 @@
-#ifndef __MAC_HPP__
-#define __MAC_HPP__
+#ifndef __TRANSMIT_HPP__
+#define __TRANSMIT_HPP__
+
+#include <stdio.h>
 
 #include "ap_int.h"
 #include <hls_stream.h>
+#include <stdio.h>
 
 typedef struct{
-    ap_uint<8>      rxd;
-    ap_uint<1>      dv;
+    ap_uint<8>      txd;
+    ap_uint<1>      en;
     ap_uint<1>      er;
-}t_gmii;
+}t_m_gmii;
 
 typedef struct{
 	ap_uint<8> data;
@@ -27,14 +30,10 @@ typedef struct {
 	ap_uint<1>      data_err;
 	ap_uint<1>      ext_err;
 	ap_uint<1>      over;
-}t_rx_status;
+}t_tx_status;
 
-typedef struct {
-	ap_uint<32>      good_frames;
-}t_rx_statistic_counters;
+//void transmit( hls::stream<t_axis> &s_axis, hls::stream<t_m_gmii> &m_gmii, hls::stream<t_tx_status> &tx_status);
+void transmit( hls::stream<t_axis> &s_axis, volatile t_m_gmii *m_gmii, hls::stream<t_tx_status> &tx_status);
 
-extern t_rx_statistic_counters rx_statistic_counters;
-
-void mac(t_gmii gmii, hls::stream<t_axis> &m_axis, hls::stream<t_rx_status> &rx_status, int* test);
 
 #endif

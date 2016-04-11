@@ -176,9 +176,9 @@ void receive(
 			int good = !(fcs_err | len_err | data_err | under | over);
 			rx_status.write((t_rx_status) {frm_cnt, good, 0, 0, under, len_err, fcs_err, data_err, 0, over});
 
-			if (good) {
-				rx_statistic_counters.good_frames++;
-			}
+//			if (good) {
+//				rx_statistic_counters.good_frames++;
+//			}
 
 			m_axis.write((t_axis) {last_axis_data, !good, 1});
 		}
@@ -194,7 +194,8 @@ void receive(
 void mac(
 		t_gmii gmii,
 		hls::stream<t_axis> &m_axis,
-		hls::stream<t_rx_status> &rx_status
+		hls::stream<t_rx_status> &rx_status,
+		int* test
 		)
 {
 	//#pragma HLS interface ap_ctrl_none port=return
@@ -202,20 +203,24 @@ void mac(
 	#pragma HLS data_pack variable=rx_status
 	#pragma HLS INTERFACE ap_hs port=rx_status
 	#pragma HLS INTERFACE axis port=m_axis
+        #pragma HLS INTERFACE ap_ovld port=test
 
-    #pragma HLS INTERFACE s_axilite port=rx_statistic_counters offset=0x0200
+//	#pragma HLS INTERFACE ap_ovld port=rx_statistic_counters
+//    #pragma HLS INTERFACE s_axilite port=rx_statistic_counters offset=0x0200
 
-//	hls::stream<t_rx_status> rx_status_int;
+	hls::stream<t_rx_status> rx_status_int;
 
-	receive(gmii, m_axis, rx_status);
+	receive(gmii, m_axis, rx_status_int);
 
-//	if (!rx_status_int.empty()) {
+	if (!rx_status_int.empty()) {
+	  t_rx_status rx_stat = rx_status_int.read();
+	  *test = rx_stat.good;
 //		t_rx_status rx_stat = rx_status_int.read();
 //		rx_status.write(rx_stat);
 //
 ////		if (rx_stat.good) {
 ////			rx_statistic_counters.good_frames++;
 ////		}
-//	}
+	}
 //	*good_frames = rx_statistic_counters.good_frames;
 }
