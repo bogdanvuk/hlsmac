@@ -6,14 +6,6 @@ typedef struct {
 	ap_uint<16>      len_type;
 }t_eth_fields;
 
-//enum e_mac_state {
-//	s_idle 		= 0,
-//	s_header 	= 1,
-//	s_data		= 2,
-//	s_pad		= 3,
-//	s_fcs		= 4
-//};
-
 #define	s_idle 		0
 #define	s_header 	1
 #define s_data		2
@@ -27,15 +19,25 @@ t_gmii pipeline2 = {0x00, 0, 0};
 t_gmii pipeline1 = {0x00, 0, 0};
 t_gmii pipeline0 = {0x00, 0, 0};
 
+t_rx_statistic_counters rx_statistic_counters = {
+		0x00000000
+};
+
 ap_uint<32> crc_state = 0xffffffff;
 //enum e_mac_state state = s_idle;
 int state = s_idle;
 t_eth_fields fields;
 int frm_cnt = 0;
+int usr_cnt = 0;
+int data_err = 0;
+ap_uint<8> len_type_high = 0;
 //t_axis last_axis_out;
 
 ap_uint<8> last_axis_data;
 int output_last;
+
+#define is_type(x) ((x) >= 0x0600)
+#define is_len(x) ((x) <= 0x05DC)
 
 void crc32(ap_uint<8> din, ap_uint<32>* crc_state){
 	#pragma HLS INLINE
@@ -66,230 +68,154 @@ void pipeline_push(t_gmii item) {
 	pipeline0 = item;
 }
 
-//void update_state(t_mac_state *state, int frm_cnt) {
-//	switch (*state) {
-//	case s_header:
-//		if (frm_cnt >= 14)
-//		{
-//			*state = s_data;
-//		}
-//		break;
-//	case s_data:
-//		if (pipeline0.dv == 0)
-//		{
-//			*state = s_fcs;
-//		}
-//		break;
-//	case s_fcs:
-//		if (pipeline4.dv == 0)
-//		{
-//			*state = s_header;
-//		}
-//		break;
-//	default:
-//		*state = s_header;
-//	}
-//}
 
-//void send_axis(hls::stream<t_axis> &m_axis, ap_uint<8> data, ap_uint<1> user, ap_uint<1> last) {
-//	t_axis item;
-//
-//	m_axis.write( {cur.rxd, 0, 0} );
-//}
-
-void mac( t_gmii gmii, hls::stream<t_axis> &m_axis)
+void receive(
+		t_gmii gmii,
+		hls::stream<t_axis> &m_axis,
+		hls::stream<t_rx_status> &rx_status
+		)
 {
-//	#pragma HLS data_pack variable=gmii
+	//	#pragma HLS data_pack variable=gmii
+	//#pragma HLS interface ap_ctrl_none port=return
 	#pragma HLS INTERFACE ap_none port=gmii
+	#pragma HLS data_pack variable=rx_status
 	#pragma HLS INTERFACE axis port=m_axis
+	#pragma HLS LATENCY max=0 min=0
 
-//	int last = 0;
-//	t_axis m_axis_out = {0x00, 0, 0, 0};
+	int next_state;
+	int start_pad_immediate;
+	//	int last = 0;
+	//	t_axis m_axis_out = {0x00, 0, 0, 0};
 
 	pipeline_push(gmii);
 	t_gmii cur = pipeline5; //[PIPELINE_LEN-1];
-//	update_state(&state, frm_cnt);
-	extract_fields(fields, frm_cnt, cur.rxd);
-#ifndef __SYNTHESIS__
+	//	update_state(&state, frm_cnt);
+	#ifndef __SYNTHESIS__
 	printf("cnt %d, state %d, din 0x%x, crc: 0x%x\n", frm_cnt, state, cur.rxd.to_int(), (~crc_state));
-#endif
+	#endif
 
 	if (cur.dv) {
+		if (cur.er) {
+			data_err = 1;
+		}
+
+		next_state = state;
 		switch (state) {
 			case s_idle:
 				if (cur.rxd == 0xd5) {
-					state = s_header;
+					next_state = s_header;
 				}
 				break;
 			case s_header:
-				crc32(cur.rxd, &crc_state);
-				m_axis.write((t_axis) {cur.rxd, 0, 0});
-				if (frm_cnt >= 14) {
-					state = s_data;
+				start_pad_immediate = 0;
+				extract_fields(fields, frm_cnt, cur.rxd);
+				if (frm_cnt == 12) {
+					len_type_high = cur.rxd;
+				} else if (frm_cnt == 13) {
+					ap_uint<8> len_type_low = cur.rxd;
+					if ((!len_type_high) && (!len_type_low)) {
+						start_pad_immediate = 1;
+					}
+					next_state = s_data;
 				}
-				frm_cnt++;
+
+				if (!start_pad_immediate) {
+					m_axis.write((t_axis) {cur.rxd, 0, 0});
+				} else {
+					next_state = s_pad;
+					last_axis_data = cur.rxd;
+				}
 				break;
 			case s_data:
-				crc32(cur.rxd, &crc_state);
+				usr_cnt++;
 				if (pipeline0.dv == 0) {
-					state = s_fcs;
+					next_state = s_fcs;
+					last_axis_data = cur.rxd;
+				} else if (usr_cnt >= fields.len_type){
+					next_state = s_pad;
 					last_axis_data = cur.rxd;
 				} else {
 					m_axis.write((t_axis) {cur.rxd, 0, 0});
 				}
-				frm_cnt++;
 				break;
 			case s_pad:
-				crc32(cur.rxd, &crc_state);
 				if (pipeline0.dv == 0) {
-					state = s_fcs;
+					next_state = s_fcs;
 				}
 				break;
 			case s_fcs:
-				crc32(cur.rxd, &crc_state);
 				output_last = 1;
 				break;
 		}
+
+		switch (state) {
+			case s_header:
+			case s_data:
+			case s_pad:
+			case s_fcs:
+				crc32(cur.rxd, &crc_state);
+				frm_cnt++;
+				break;
+		}
+
+		state = next_state;
+
 	} else {
 		if (output_last == 1) {
-			if ((~crc_state) != 0x2144DF1C) {
-				m_axis.write((t_axis) {last_axis_data, 1, 1});
-			} else {
-				m_axis.write((t_axis) {last_axis_data, 0, 1});
+			//0xDEBB20E3 = ~0x2144DF1C, so that crc_state needs not be inverted
+			int fcs_err = (crc_state != 0xDEBB20E3);
+			int len_err = 0;
+			int under = (frm_cnt < 64);
+			int over = (frm_cnt > 1500);
+
+			if (is_len(fields.len_type)) {
+				len_err = (fields.len_type != usr_cnt);
+
 			}
+
+			int good = !(fcs_err | len_err | data_err | under | over);
+			rx_status.write((t_rx_status) {frm_cnt, good, 0, 0, under, len_err, fcs_err, data_err, 0, over});
+
+			if (good) {
+				rx_statistic_counters.good_frames++;
+			}
+
+			m_axis.write((t_axis) {last_axis_data, !good, 1});
 		}
 		output_last = 0;
+		usr_cnt = 0;
 		state = s_idle;
 		crc_state = 0xffffffff;
 		frm_cnt = 0;
+		data_err = 0;
 	}
 
-
-//	*m_axis = m_axis_out;
-
 }
+void mac(
+		t_gmii gmii,
+		hls::stream<t_axis> &m_axis,
+		hls::stream<t_rx_status> &rx_status
+		)
+{
+	//#pragma HLS interface ap_ctrl_none port=return
+	#pragma HLS INTERFACE ap_none port=gmii
+	#pragma HLS data_pack variable=rx_status
+	#pragma HLS INTERFACE ap_hs port=rx_status
+	#pragma HLS INTERFACE axis port=m_axis
 
-//void mac( t_gmii gmii, hls::stream<t_axis> &m_axis )
-//{
-//	#pragma HLS data_pack variable=gmii
-//	#pragma HLS INTERFACE ap_none port=gmii
-//	#pragma HLS INTERFACE axis port=m_axis
+    #pragma HLS INTERFACE s_axilite port=rx_statistic_counters offset=0x0200
+
+//	hls::stream<t_rx_status> rx_status_int;
+
+	receive(gmii, m_axis, rx_status);
+
+//	if (!rx_status_int.empty()) {
+//		t_rx_status rx_stat = rx_status_int.read();
+//		rx_status.write(rx_stat);
 //
-//	int last = 0;
-//
-//	pipeline_push(gmii);
-//	t_gmii cur = pipeline5; //[PIPELINE_LEN-1];
-////	update_state(&state, frm_cnt);
-//	extract_fields(fields, frm_cnt, cur.rxd);
-//#ifndef __SYNTHESIS__
-//	printf("cnt %d, state %d, din 0x%x, crc: 0x%x\n", frm_cnt, state, cur.rxd.to_int(), (~crc_state));
-//#endif
-//
-//	switch (state) {
-//	    case s_idle:
-//	    	if (pipeline4.dv == 1) {
-////	    		crc_state = 0xffffffff;
-//	    		state = s_header;
-//	    		frm_cnt = 0;
-//	    	}
-//	    	break;
-//		case s_header:
-//			crc32(cur.rxd, &crc_state);
-//			m_axis.write( (t_axis) {cur.rxd, 0, 0} );
-//			if (frm_cnt >= 14) {
-//				state = s_data;
-//			}
-//			frm_cnt++;
-//			break;
-//		case s_data:
-//			crc32(cur.rxd, &crc_state);
-//			if (pipeline0.dv == 0) {
-//				state = s_fcs;
-//				last_axis_out = (t_axis){cur.rxd, 0, 1};
-//			} else {
-//				m_axis.write((t_axis){cur.rxd, 0, 0});
-//			}
-//			frm_cnt++;
-//			break;
-//		case s_pad:
-//			crc32(cur.rxd, &crc_state);
-//			if (pipeline0.dv == 0) {
-//				state = s_fcs;
-//			}
-//			break;
-//		case s_fcs:
-//			if (pipeline5.dv == 0) {
-////				if ((~crc_state) != 0x2144DF1C) {
-////					last_axis_out.user = 1;
-////				}
-////				m_axis.write(last_axis_out);
-////				crc_state = 0xffffffff;
-//				state = s_header;
-//				frm_cnt = 0;
-//			} else {
-//				crc32(cur.rxd, &crc_state);
-//			}
-//			break;
+////		if (rx_stat.good) {
+////			rx_statistic_counters.good_frames++;
+////		}
 //	}
-//
-//}
-
-//void mac( hls::stream<t_gmii> &gmii, hls::stream<t_axis> &m_axis )
-//{
-//	#pragma HLS data_pack variable=gmii
-//	#pragma HLS INTERFACE axis port=gmii
-//	#pragma HLS INTERFACE axis port=m_axis
-//
-//	int last = 0;
-//	enum e_mac_state state;
-//	t_eth_fields fields;
-//	int frm_cnt;
-//	ap_uint<32> crc_state = 0xffffffff;
-//
-//	PRELOAD_PIPELINE: while (!pipeline4.dv) {
-//		pipeline_push(gmii.read());
-//	}
-//
-//	frm_cnt = 0;
-//	state = s_header;
-//	DEFRAME: do
-//	{
-//		t_gmii cur = pipeline4; //[PIPELINE_LEN-1];
-//		update_state(&state, frm_cnt);
-//		extract_fields(fields, frm_cnt, cur.rxd);
-//		crc32(cur.rxd, &crc_state);
-//#ifndef __SYNTHESIS__
-//		printf("cnt %d, state %d, din 0x%x, crc: 0x%x\n", frm_cnt, state, cur.rxd.to_int(), (~crc_state));
-//#endif
-//		t_axis dout;
-//		dout.data = cur.rxd;
-//		dout.last = 0;
-//		dout.user = 0;
-//
-//		switch (state) {
-//			case s_header:
-//			case s_data:
-//				m_axis.write( dout );
-//				break;
-//			case s_fcs:
-//				break;
-//		}
-//
-//		pipeline_push(gmii.read());
-//		frm_cnt++;
-//		last = !pipeline4.dv.to_int();
-//	} while(!last);
-//
-//	t_axis dout;
-//	if ((~crc_state) == 0x2144DF1C) {
-//		dout.user = 0;
-//	} else {
-//		dout.user = 1;
-//	}
-//
-//	dout.data = 0;
-//	dout.last = 1;
-//	m_axis.write(dout);
-//}
-
-
+//	*good_frames = rx_statistic_counters.good_frames;
+}

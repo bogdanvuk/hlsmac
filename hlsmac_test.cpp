@@ -12,10 +12,43 @@ int frm1[] = {
 		0x2d, 0xe8, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
 		0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
 		0x0e, 0x0f, 0x10, 0x11, 0xb3, 0x31, 0x88, 0x1b};
-const int FRM1_LEN = sizeof(frm1) / sizeof(int);
 
-#define FRAMES_CNT 3
+int frm2[] = {
+		0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0xd5,
+		0x00, 0x10, 0xa4, 0x7b, 0xea, 0x80, 0x00, 0x12,
+		0x34, 0x56, 0x78, 0x90, 0x00, 0x2e, 0x45, 0x00,
+		0x00, 0x2e, 0xb3, 0xfe, 0x00, 0x00, 0x80, 0x11,
+		0x05, 0x40, 0xc0, 0xa8, 0x00, 0x2c, 0xc0, 0xa8,
+		0x00, 0x04, 0x04, 0x00, 0x04, 0x00, 0x00, 0x1a,
+		0x2d, 0xe8, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+		0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+		0x0e, 0x0f, 0x10, 0x11, 0x8d, 0x69, 0x70, 0x3e};
 
+int frm3[] = {
+		0x55, 0xd5,
+		0x00, 0x10, 0xa4, 0x7b, 0xea, 0x80, 0x00, 0x12,
+		0x34, 0x56, 0x78, 0x90, 0x00, 0x02, 0x45, 0x00,
+		0x00, 0x2e, 0xb3, 0xfe, 0x00, 0x00, 0x80, 0x11,
+		0x05, 0x40, 0xc0, 0xa8, 0x00, 0x2c, 0xc0, 0xa8,
+		0x00, 0x04, 0x04, 0x00, 0x04, 0x00, 0x00, 0x1a,
+		0x2d, 0xe8, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+		0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+		0x0e, 0x0f, 0x10, 0x11, 0xd8, 0x47, 0x84, 0xff};
+
+typedef struct {
+	int* data;
+	int len;
+}t_frame;
+
+#define frm_inst(f) ((t_frame) {(f), sizeof(f) / sizeof(int)})
+
+t_frame frames[] = {
+		frm_inst(frm1),
+		frm_inst(frm2),
+		frm_inst(frm3)
+};
+
+#define FRAMES_CNT sizeof(frames) / sizeof(t_frame)
 
 int main()
 {
@@ -23,51 +56,69 @@ int main()
   int j;
   hls::stream<t_axis> B;
   int correct_frames = 0;
+  hls::stream<t_rx_status> rx_status;
 
   // Place some idles at the beginning
   for (j = 0; j < 5; j++) {
-	  mac((t_gmii) {0, 0, 0}, B);
+	  mac((t_gmii) {0, 0, 0}, B, rx_status);
   }
 
   for (j = 0; j < FRAMES_CNT; j++) {
 	  //Put data into A
-	  for(i=0; i < FRM1_LEN; i++){
-		  mac((t_gmii) {frm1[i], 1, 0}, B);
+	  for(i=0; i < frames[j].len; i++){
+		  mac((t_gmii) {frames[j].data[i], 1, 0}, B, rx_status);
 	  }
-	  mac((t_gmii) {0, 0, 0}, B);
+	  mac((t_gmii) {0, 0, 0}, B, rx_status);
   }
 
   // Place some idles at the end
   for (j = 0; j < 5; j++) {
-	  mac((t_gmii) {0, 0, 0}, B);
+	  mac((t_gmii) {0, 0, 0}, B, rx_status);
   }
 
 
   //Call the hardware function
 //  mac(A, B);
 
+  printf("*****************************************************************\n");
+  printf("RECEIVED FRAMES\n");
+  printf("*****************************************************************\n");
   t_axis m_axis;
   while (!B.empty()) {
 	  m_axis=B.read();
       printf("Data 0x%x, LAST %d, USER %d\n", m_axis.data.to_int(), m_axis.last.to_int(), m_axis.user.to_int());
       if (m_axis.last) {
-    	  if(!m_axis.user){
+    	  t_rx_status stat = rx_status.read();
+    	  if((!m_axis.user) && (!stat.fcs_err) && (!stat.len_err)){
     		  correct_frames++;
     	  }
+    	  printf("*****************************************************************\n");
+    	  printf("Frame status: count=%d, good=%d, under=%d, len_err=%d, fcs_err=%d, data_err=%d, over=%d\n",
+    			  stat.count.to_int(),
+				  stat.good.to_int(),
+				  stat.under.to_int(),
+				  stat.len_err.to_int(),
+				  stat.fcs_err.to_int(),
+				  stat.data_err.to_int(),
+				  stat.over.to_int()
+				  );
+    	  printf("*****************************************************************\n");
       }
  }
 
+  printf("*****************************************************************\n");
   if (correct_frames < FRAMES_CNT) {
-	  printf("*****************************************************************\n");
 	  printf("FRAME ERROR %d/%d\n", FRAMES_CNT-correct_frames, FRAMES_CNT);
-	  printf("*****************************************************************\n");
 	  return 1;
-  } else {
-	  printf("*****************************************************************\n");
-	  printf("Frame correct %d/%d\n", FRAMES_CNT,FRAMES_CNT);
-	  printf("*****************************************************************\n");
-	  return 0;
   }
+
+//  if (rx_statistic_counters.good_frames != correct_frames) {
+//	  printf("STATISTICS ERROR: correct_frames=%d, good_frames=%d\n", correct_frames, rx_statistic_counters.good_frames.to_int());
+//  }
+
+  printf("Frame correct %d/%d\n", FRAMES_CNT,FRAMES_CNT);
+  printf("*****************************************************************\n");
+  return 0;
 
 //  //Run a software version of the hardware function to validate results
 //  for(i=0; i < 50; i++){
