@@ -2,44 +2,23 @@
 #include "fcs.hpp"
 #include "ap_shift_reg.h"
 
+#include <stdio.h>
+
 typedef struct {
     ap_uint<48>      src;
     ap_uint<48>      dst;
     ap_uint<16>      len_type;
 }t_eth_fields;
 
-#define s_idle          0
-#define s_header        1
-#define s_data          2
-#define s_pad           3
-#define s_fcs           4
-
-typedef struct{
-	ap_uint<1> valid;
-	ap_uint<8> data;
-	ap_uint<1> user;
-	ap_uint<1> last;
-}t_pipeline;
-
-//t_gmii pipeline5 = {0x00, 0, 0};
-//t_gmii pipeline4 = {0x00, 0, 0};
-//t_gmii pipeline3 = {0x00, 0, 0};
-//t_gmii pipeline2 = {0x00, 0, 0};
-//t_gmii pipeline1 = {0x00, 0, 0};
-//t_gmii pipeline0 = {0x00, 0, 0};
-//
-//t_rx_statistic_counters rx_statistic_counters = {
-//    0x00000000
-//};
-
 ap_uint<32> crc_state = 0xffffffff;
-//enum e_mac_state state = s_idle;
-int state = s_idle;
 t_eth_fields fields;
 int frm_cnt = 0;
 int usr_cnt = 0;
 int data_err = 0;
 ap_uint<8> len_type_high = 0;
+ap_uint<16> len_type = 0xffff;
+t_s_gmii cur;
+static ap_shift_reg<t_s_gmii, 5> pipeline;
 //t_axis last_axis_out;
 
 ap_uint<8> last_axis_data;
@@ -56,97 +35,181 @@ void extract_fields(t_eth_fields &fields, int frm_cnt, ap_uint<8> frm_data) {
     }
 }
 
-//void pipeline_push(t_gmii item) {
-//    pipeline5 = pipeline4;
-//    pipeline4 = pipeline3;
-//    pipeline3 = pipeline2;
-//    pipeline2 = pipeline1;
-//    pipeline1 = pipeline0;
-//    pipeline0 = item;
-//}
-
 #define SFD_CHAR      0xd5
 
-int gmii_input(hls::stream<t_s_gmii> &s_gmii, t_s_gmii &din, t_s_gmii &cur, ap_shift_reg<t_s_gmii, 5> &pipeline) {
+int gmii_input(hls::stream<t_s_gmii> &s_gmii, t_s_gmii &din, t_s_gmii &cur, ap_shift_reg<t_s_gmii, 5> &pipeline, int* empty) {
 #pragma HLS INLINE
-	s_gmii.read_nb(din);
-	cur = pipeline.shift(din);
-	return cur.dv;
+    *empty = !s_gmii.read_nb(din);
+    cur = pipeline.shift(din);
+    return cur.dv && (!(*empty));
 }
 
 #define axis_output(d)                          \
     do {                                        \
         frm_cnt++;                              \
-        crc32(d, &crc_state);                   \
-        m_axis.write((t_axis){d, 0, 0});     \
+        m_axis.write((t_axis){d, 0, 0});        \
+        printf("Data 0x%x, FCS 0x%x\n", d.to_int(), ~crc_state.to_int()); \
     } while(0)
 
-void receive(
-    hls::stream<t_s_gmii> &s_gmii,
-    hls::stream<t_axis> &m_axis, 
-    t_rx_status* rx_status
-    ) {
+#define fcs_register(d)                         \
+    do {                                        \
+        frm_cnt++;                              \
+        printf("Data 0x%x, FCS 0x%x\n", d.to_int(), ~crc_state.to_int()); \
+    } while(0)
+
+
+//int receive_frame(
+//                  hls::stream<t_s_gmii> &s_gmii,
+//                  hls::stream<t_axis> &m_axis,
+//                  t_rx_status* rx_status,
+//                  ap_shift_reg<t_s_gmii, 5> &pipeline
+//                  )
+//{
+//    t_s_gmii din;
+//    t_s_gmii ignore;
+//#pragma HLS LATENCY min=0
 //#pragma HLS interface ap_ctrl_none port=return
-//#pragma HLS data_pack variable=s_gmii
+//#pragma HLS INLINE
+//#pragma HLS PIPELINE
+//    //gmii_input(s_gmii, din, cur, pipeline, &empty);
+//
+////    while(!gmii_input(s_gmii, din, cur, pipeline, &empty)) {
+////#pragma HLS LATENCY max=0 min=0
+//////        if (empty) return 1;
+////    };
+//
+// PREAMBLE: do {
+//    if (!gmii_input(s_gmii, din, cur, pipeline, &empty))
+//    	goto FRAME_END;
+//} while (cur.rxd != SFD_CHAR);
+//
+//    if (!gmii_input(s_gmii, din, cur, pipeline, &empty)) goto FRAME_END;
+//
+// USER_DATA: while(din.dv) {
+//#pragma HLS LATENCY max=0 min=0
+//    if (frm_cnt == 12) {
+//    len_type = cur.rxd;
+//} else if (frm_cnt == 13) {
+//    len_type = (len_type << 8) | cur.rxd;
+//}
+//    axis_output(cur.rxd);
+//    if (!gmii_input(s_gmii, din, cur, pipeline, &empty)) goto FRAME_END;
+//}
+//
+//    if (!gmii_input(s_gmii, din, ignore, pipeline, &empty)) goto FRAME_END;
+//    if (!gmii_input(s_gmii, din, ignore, pipeline, &empty)) goto FRAME_END;
+//    if (!gmii_input(s_gmii, din, ignore, pipeline, &empty)) goto FRAME_END;
+//    //    FCS: for(i = 0; i < 3; i++) {
+//    //
+//    //      if (!gmii_input(s_gmii, din, ignore, pipeline, &empty)) goto FRAME_END;
+//    //    }
+//
+// FRAME_END:
+//    {
+//#pragma HLS LATENCY max=0 min=0
+//    gmii_input(s_gmii, din, ignore, pipeline, &empty);
+//    m_axis.write((t_axis){cur.rxd, 1, 1});
+//}
+//
+//    return empty;
+//}
+
+
+void receive(
+             hls::stream<t_s_gmii> &s_gmii,
+             hls::stream<t_axis> &m_axis, 
+             t_rx_status* rx_status
+             ) 
+{
+    //#pragma HLS interface ap_ctrl_none port=return
+    //#pragma HLS data_pack variable=s_gmii
 
 #pragma HLS INTERFACE axis port=m_axis
 #pragma HLS data_pack variable=rx_status
 #pragma HLS INTERFACE ap_ovld port=rx_status
-#pragma HLS LOOP_MERGE
+#pragma HLS PIPELINE rewind
     int i;
+    int empty = 0;
     t_s_gmii din;
-    t_s_gmii cur;
-    ap_uint<16> len_type = 0xffff;
     t_s_gmii ignore;
-    static ap_shift_reg<t_s_gmii, 5> pipeline;
+    t_s_gmii last;
 
-    do {
-    	gmii_input(s_gmii, din, cur, pipeline);
-    } while(!cur.dv);
-
-  PREAMBLE: do {
-	if (!gmii_input(s_gmii, din, cur, pipeline)) goto FRAME_END;
-    } while (cur.rxd != SFD_CHAR);
-
-  if (!gmii_input(s_gmii, din, cur, pipeline)) goto FRAME_END;
-
-//  SRC_DEST: for(i = 0; i < 12; i++) {
-//	    axis_output(cur.rxd);
-//        if (!gmii_input(s_gmii, din, cur, pipeline)) goto FRAME_END;
-//    }
-//  {
-//#pragma HLS LATENCY max=1 min=1
-//	len_type = cur.rxd;
-//	axis_output(cur.rxd);
-//	if (!gmii_input(s_gmii, din, cur, pipeline)) goto FRAME_END;
-//	len_type = (len_type << 8) | cur.rxd;
+    gmii_input(s_gmii, din, cur, pipeline, &empty);
+ MAIN: while (!empty) {
+#pragma HLS PIPELINE rewind
+//#pragma HLS LATENCY max=0 min=0
+//    	gmii_input(s_gmii, din, cur, pipeline, &empty);
+//    IDLE: while(!cur.dv) {
+//#pragma HLS LATENCY max=0 min=0
+//#pragma HLS PIPELINE rewind
+//            //        if (empty) return 1;
+//    		gmii_input(s_gmii, din, cur, pipeline, &empty);
+//    	};
 //
-////    if (!gmii_input(s_gmii, din, cur, pipeline)) goto FRAME_END;
-//
-//  }
-//    axis_output(din.rxd);
+//    PREAMBLE: while (cur.rxd != SFD_CHAR) {
+//#pragma HLS LATENCY max=0 min=0
+//#pragma HLS PIPELINE rewind
+//    	    if (!gmii_input(s_gmii, din, cur, pipeline, &empty)) goto FRAME_END;
+//    	}
+
+	 gmii_input(s_gmii, din, cur, pipeline, &empty);
+	 crc_state = 0xffffffff;
+	 frm_cnt = 0;
+    PREAMBLE: while (!(cur.dv && (cur.rxd == SFD_CHAR))) {
+#pragma HLS LATENCY max=0 min=0
+#pragma HLS PIPELINE rewind
+    		int ret = gmii_input(s_gmii, din, cur, pipeline, &empty);
+    	    if (empty) return;
+    	}
+
+    	if (!gmii_input(s_gmii, din, cur, pipeline, &empty)) goto FRAME_END;
 
     USER_DATA: while(din.dv) {
 #pragma HLS LATENCY max=0 min=0
-    	if (frm_cnt == 12) {
-    		len_type = cur.rxd;
-    	} else if (frm_cnt == 13) {
-    		len_type = (len_type << 8) | cur.rxd;
+    	    if (frm_cnt == 12) {
+                len_type = cur.rxd;
+            } else if (frm_cnt == 13) {
+                len_type = (len_type << 8) | cur.rxd;
+            }
+            crc32(cur.rxd, &crc_state);
+    	    axis_output(cur.rxd);
+    	    if (!gmii_input(s_gmii, din, cur, pipeline, &empty)) goto FRAME_END;
     	}
-    	axis_output(cur.rxd);
-    	if (!gmii_input(s_gmii, din, cur, pipeline)) goto FRAME_END;
-    }
+        last = cur;
 
-    FCS: for(i = 0; i < 3; i++) {
+        FCS: for(i = 0; i < 5; i++) {
 #pragma HLS LATENCY max=0 min=0
-    	if (!gmii_input(s_gmii, din, ignore, pipeline)) goto FRAME_END;
+#pragma HLS PIPELINE rewind
+#pragma HLS UNROLL
+//        	  fcs_register(cur.rxd);
+        	  frm_cnt++;
+        	  crc32(cur.rxd, &crc_state);
+              if (!gmii_input(s_gmii, din, cur, pipeline, &empty)) goto FRAME_END;
+        }
+
+    FRAME_END: {
+//#pragma HLS LATENCY max=0 min=0
+#pragma HLS PIPELINE rewind
+//    	    fcs_register(cur.rxd);
+//    	    gmii_input(s_gmii, din, cur, pipeline, &empty);
+
+			int fcs_err = (crc_state != 0xDEBB20E3);
+			int len_err = 0;
+			int under = (frm_cnt < 64);
+			int over = (frm_cnt > 1500);
+
+			// if (is_len(fields.len_type)) {
+			// 	len_err = (fields.len_type != usr_cnt);
+
+			// }
+
+			int good = !(fcs_err | len_err | data_err | under | over);
+			*rx_status = (t_rx_status) {frm_cnt, good, 0, 0, under, len_err, fcs_err, data_err, 0, over};
+
+    	    m_axis.write((t_axis){last.rxd, !good, 1});
+    	}
     }
-
-  FRAME_END:
-    gmii_input(s_gmii, din, ignore, pipeline);
-    m_axis.write((t_axis){cur.rxd, 1, 1});
 }
-
 //      int next_state;
 //      int start_pad_immediate;
 // //   int last = 0;
