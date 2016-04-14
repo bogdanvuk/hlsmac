@@ -71,7 +71,7 @@ begin
             s_axis_TUSER(0)  => s_axis_tuser,
             s_axis_TLAST(0)  => s_axis_tlast,
             m_gmii_V_din     => m_gmii_V_din,
-            m_gmii_V_full_n  => '0',
+            m_gmii_V_full_n  => '1',
             m_gmii_V_write   => open,
             tx_status        => open,
             tx_status_ap_vld => open);
@@ -85,7 +85,7 @@ begin
             ap_clk           => m_axis_aclk,
             ap_rst_n         => m_axis_aresetn,
             s_gmii_V_dout    => gmii_er & gmii_dv & gmii_rxd,
-            s_gmii_V_empty_n => '0',
+            s_gmii_V_empty_n => '1',
             s_gmii_V_read    => open,
             m_axis_TDATA     => m_axis_tdata,
             m_axis_TVALID    => m_axis_tvalid,

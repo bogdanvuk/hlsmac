@@ -27,6 +27,6 @@ typedef struct {
 	ap_uint<1>      under;
 }t_tx_status;
 
-void transmit( hls::stream<t_axis> &s_axis, hls::stream<t_m_gmii> &m_gmii, hls::stream<t_tx_status> &tx_status);
+void transmit( hls::stream<t_axis> &s_axis, hls::stream<t_m_gmii> &m_gmii, t_tx_status* tx_status);
 
 #endif

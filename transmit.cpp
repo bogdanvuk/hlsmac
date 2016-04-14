@@ -6,8 +6,6 @@
 #define PREAMBLE_CHAR 0x55
 #define SFD_CHAR      0xd5
 
-ap_uint<32> crc_state = 0xffffffff;
-
 typedef struct {
     int a;
     int b;
@@ -37,35 +35,45 @@ void transmit(
 #pragma HLS INTERFACE ap_ovld port=tx_status
 
     int i;
+    int frm_cnt;
+    int frm_err;
     if(!s_axis.empty()) {
-	int frm_cnt = 0;
-	int frm_err = 0;
 	t_axis din = s_axis.read();
+
       PREAMBLE: for (i = 0; i < PREAMBLE_CNT; i++) {
+	  #pragma HLS UNROLL
+	  #pragma HLS LATENCY max=0 min=0
 	    fcs_uncovered_append(PREAMBLE_CHAR);
 	}
+    ap_uint<32> crc_state = 0xffffffff;
+
+    frm_cnt = 0;
+    frm_err = 0;
 	fcs_uncovered_append(SFD_CHAR);
        
-	crc_state = 0xffffffff;
-	fcs_covered_append(din.data, din.user);
 
-      DATA: while((!s_axis.empty()) || (frm_cnt < 60) ) {
+	//fcs_covered_append(din.data, din.user);
+
+      DATA: while(!s_axis.empty()){
 #pragma HLS LATENCY max=0 min=0
 	    ap_uint<8> data;
-	    if (s_axis.read_nb(din))
-		data = din.data;
-	    else
-		data = 0x00;
 
-	    fcs_covered_append(data, din.user);
+	    fcs_covered_append(din.data, din.user);
+	    s_axis.read_nb(din);
 	}
 
-	ap_uint<32> fcs = ~crc_state;
+    fcs_covered_append(din.data, din.user);
+
+    PAD: while (frm_cnt < 60) {
+#pragma HLS LATENCY max=0 min=0
+    	fcs_covered_append(0x00, 0);
+    }
+
       FCS: for (i = 0; i < 4; i++) {
 #pragma HLS UNROLL
-#pragma HLS LATENCY max=0 min=0
-	    fcs_uncovered_append(fcs & 0xff);
-	    fcs >>= 8;
+//#pragma HLS LATENCY max=0 min=0
+	    fcs_uncovered_append((~crc_state) & 0xff);
+	    crc_state >>= 8;
 	}
 
 	*tx_status = (t_tx_status) {frm_cnt, !frm_err, 0, 0, 0, 0, 0};

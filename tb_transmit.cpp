@@ -27,6 +27,11 @@ int frm3[] = {
   0x34, 0x56, 0x78, 0x90, 0x00, 0x02, 0x45, 0x00,
 };
 
+int frm4[] = {
+  0x00, 0x10, 0xa4, 0x7b, 0xea, 0x80, 0x00, 0x12,
+  0x34, 0x56, 0x78, 0x90, 0x00, 0x02, 0x45, 0x00,
+};
+
 typedef struct {
   int* data;
   int len;
@@ -35,9 +40,10 @@ typedef struct {
 #define frm_inst(f) ((t_frame) {(f), sizeof(f) / sizeof(int)})
 
 t_frame frames[] = {
-//  frm_inst(frm1),
-//  frm_inst(frm2)
-  frm_inst(frm3)
+  frm_inst(frm1),
+  frm_inst(frm2),
+  frm_inst(frm3),
+  frm_inst(frm4)
 };
 
 #define FRAMES_CNT sizeof(frames) / sizeof(t_frame)
@@ -49,7 +55,7 @@ int main()
   hls::stream<t_axis> m_axis;
   hls::stream<t_m_gmii> m_gmii;
   int correct_frames = 0;
-  hls::stream<t_tx_status> tx_status;
+  t_tx_status tx_status;
 
   for (j = 0; j < FRAMES_CNT; j++) {
     //Put data into A
@@ -57,7 +63,7 @@ int main()
       int last = (i == (frames[j].len - 1));
       m_axis.write((t_axis){frames[j].data[i], 0, last});
     }
-    transmit(m_axis, m_gmii, tx_status);
+    transmit(m_axis, m_gmii, &tx_status);
   }
 
   while (!m_gmii.empty()) {
