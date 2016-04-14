@@ -67,6 +67,10 @@ int main()
         gmii.write((t_s_gmii) {0, 0, 0});
     }
 
+    for (j = 0; j < 5; j++) {
+    	gmii.write((t_s_gmii) {0, 0, 0});
+    }
+
     receive(gmii, s_axis, &rx_status);
 
         printf("*****************************************************************\n");

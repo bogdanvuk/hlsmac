@@ -1,7 +1,6 @@
 #include "fcs.hpp"
 
 void crc32(ap_uint<8> din, ap_uint<32>* crc_state){
-	#pragma HLS INLINE
 	unsigned j;
 
 	*crc_state ^= din;
