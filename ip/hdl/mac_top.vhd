@@ -73,8 +73,9 @@ begin
             m_gmii_V_din     => m_gmii_V_din,
             m_gmii_V_full_n  => '1',
             m_gmii_V_write   => open,
-            tx_status        => open,
-            tx_status_ap_vld => open);
+            tx_status_V_din  => open,
+            tx_status_V_full_n => '1',
+            tx_status_V_write => open);
 
     gmii_txd <= m_gmii_V_din(7 downto 0);
     gmii_tx_en <= m_gmii_V_din(8);

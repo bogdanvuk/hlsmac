@@ -69,8 +69,9 @@ int main()
       int last = (i == (frames[j].len - 1));
       m_axis.write((t_axis){frames[j].data[i], 0, last});
     }
-    transmit(m_axis, m_gmii, &tx_status);
   }
+
+  transmit(m_axis, m_gmii, &tx_status);
 
   while (!m_gmii.empty()) {
      t_m_gmii gmii = m_gmii.read();
