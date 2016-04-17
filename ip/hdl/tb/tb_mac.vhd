@@ -33,8 +33,8 @@ begin
         src_addr    => x"5A5A5A5A5A5A",
         dst_addr_1  => x"DADADADADA01",
         dst_addr_2  => x"DADADADADA02",
-        pkg_len_min => x"0003",
-        pkg_len_max => x"0064",
+        pkg_len_min => x"0030",
+        pkg_len_max => x"0030",
         pkg_len_inc => x"01",
 
         gen_oversized_frames    => '0',

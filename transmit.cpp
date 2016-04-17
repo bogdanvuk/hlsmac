@@ -2,6 +2,8 @@
 #include "fcs.hpp"
 #include "ap_utils.h"
 
+#define RELEASE
+
 #define PREAMBLE_CNT  7
 #define PREAMBLE_CHAR 0x55
 #define SFD_CHAR      0xd5
@@ -11,36 +13,47 @@ typedef struct {
     int b;
 }dout_t;
 
+#define gmii_out(d, en, err) m_gmii.write((t_m_gmii){d, en, err})
+
 #define fcs_covered_append(d, err)		\
     do {					\
 	frm_err |= err;				\
 	frm_cnt++;				\
 	crc32(d, &crc_state);			\
-	m_gmii.write_nb((t_m_gmii){d, 1, err});	\
+	gmii_out(d, 1, err);	\
     } while(0)
 
-#define fcs_uncovered_append(d) m_gmii.write_nb((t_m_gmii){d, 1, 0})
+#define fcs_uncovered_append(d) gmii_out(d, 1, 0)
 
 void transmit(
     hls::stream<t_axis> &s_axis,
-    hls::stream<t_m_gmii> &m_gmii,
+	hls::stream<t_m_gmii> &m_gmii,
     t_tx_status* tx_status
     )
 {
 
-#pragma HLS interface ap_ctrl_none port=return
+#ifdef RELEASE
+    #pragma HLS interface ap_ctrl_none port=return
+    #pragma HLS data_pack variable=m_gmii
+#endif
+
 #pragma HLS INTERFACE axis port=s_axis
-#pragma HLS data_pack variable=m_gmii
 #pragma HLS data_pack variable=tx_status
 #pragma HLS INTERFACE ap_ovld port=tx_status
+
+	#pragma HLS LATENCY max=0 min=0
 
     int i;
     int frm_cnt;
     int frm_err;
-    if(!s_axis.empty()) {
-	t_axis din = s_axis.read();
+    t_axis din;
+    int start;
 
-      PREAMBLE: for (i = 0; i < PREAMBLE_CNT; i++) {
+    while (!s_axis.read_nb(din)) {
+    	gmii_out(0x07, 0, 0);
+    }
+
+     PREAMBLE: for (i = 0; i < PREAMBLE_CNT; i++) {
 	  #pragma HLS UNROLL
 	  #pragma HLS LATENCY max=0 min=0
 	    fcs_uncovered_append(PREAMBLE_CHAR);
@@ -77,8 +90,6 @@ void transmit(
 	}
 
 	*tx_status = (t_tx_status) {frm_cnt, !frm_err, 0, 0, 0, 0, 0};
-}
-
-m_gmii.write((t_m_gmii){0x07, 0, 0});
+	gmii_out(0x07, 0, 0);
 
 }
