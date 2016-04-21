@@ -15,6 +15,7 @@ set sources [list \
 add_files -norecurse -quiet [join $sources " "]
 update_compile_order
 ipx::package_project -force -root_dir .
+set_property supported_families {{kintex7} {Pre-Production} {zynq} {Pre-Production}} [ipx::current_core]
 
 ipx::add_bus_interface {m_gmii} [ipx::current_core]
 set_property abstraction_type_vlnv {xilinx.com:interface:gmii_rtl:1.0} [ipx::get_bus_interfaces m_gmii -of_objects [ipx::current_core]]

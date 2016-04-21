@@ -1,6 +1,7 @@
 #ifndef __TRANSMIT_HPP__
 #define __TRANSMIT_HPP__
 
+#include "hlsmac.hpp"
 #include "ap_int.h"
 #include <hls_stream.h>
 #include <stdio.h>
@@ -10,12 +11,6 @@ typedef struct{
     ap_uint<1>      en;
     ap_uint<1>      er;
 }t_m_gmii;
-
-typedef struct{
-	ap_uint<8> data;
-	ap_uint<1> user;
-	ap_uint<1> last;
-}t_axis;
 
 typedef struct {
 	ap_uint<14>     count;

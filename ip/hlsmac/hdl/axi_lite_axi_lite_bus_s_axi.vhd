@@ -35,184 +35,119 @@ port (
     RRESP                 :out  STD_LOGIC_VECTOR(1 downto 0);
     RVALID                :out  STD_LOGIC;
     RREADY                :in   STD_LOGIC;
-    interrupt             :out  STD_LOGIC;
     -- user signals
-    tx_64_V_i             :out  STD_LOGIC_VECTOR(63 downto 0);
-    tx_64_V_o             :in   STD_LOGIC_VECTOR(63 downto 0);
-    tx_64_V_o_ap_vld      :in   STD_LOGIC;
-    tx_256_511_V_i        :out  STD_LOGIC_VECTOR(63 downto 0);
-    tx_256_511_V_o        :in   STD_LOGIC_VECTOR(63 downto 0);
-    tx_256_511_V_o_ap_vld :in   STD_LOGIC;
+    rx_bytes_V            :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_64_V               :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_65_127_V           :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_128_255_V          :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_256_511_V          :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_512_1023_V         :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_1024_max_V         :in   STD_LOGIC_VECTOR(31 downto 0);
+    tx_64_V               :in   STD_LOGIC_VECTOR(31 downto 0);
+    tx_65_127_V           :in   STD_LOGIC_VECTOR(31 downto 0);
+    tx_128_255_V          :in   STD_LOGIC_VECTOR(31 downto 0);
+    tx_256_511_V          :in   STD_LOGIC_VECTOR(31 downto 0);
+    tx_512_1023_V         :in   STD_LOGIC_VECTOR(31 downto 0);
+    tx_1024_max_V         :in   STD_LOGIC_VECTOR(31 downto 0);
+    rx_good_V             :in   STD_LOGIC_VECTOR(31 downto 0);
     dummy_last_V_i        :out  STD_LOGIC_VECTOR(31 downto 0);
     dummy_last_V_o        :in   STD_LOGIC_VECTOR(31 downto 0);
-    dummy_last_V_o_ap_vld :in   STD_LOGIC;
-    ap_start              :out  STD_LOGIC;
-    ap_done               :in   STD_LOGIC;
-    ap_ready              :in   STD_LOGIC;
-    ap_idle               :in   STD_LOGIC;
-    tx_65_127_V_i         :out  STD_LOGIC_VECTOR(63 downto 0);
-    tx_65_127_V_o         :in   STD_LOGIC_VECTOR(63 downto 0);
-    tx_65_127_V_o_ap_vld  :in   STD_LOGIC;
-    tx_128_255_V_i        :out  STD_LOGIC_VECTOR(63 downto 0);
-    tx_128_255_V_o        :in   STD_LOGIC_VECTOR(63 downto 0);
-    tx_128_255_V_o_ap_vld :in   STD_LOGIC;
-    tx_512_1023_V_i       :out  STD_LOGIC_VECTOR(63 downto 0);
-    tx_512_1023_V_o       :in   STD_LOGIC_VECTOR(63 downto 0);
-    tx_512_1023_V_o_ap_vld :in   STD_LOGIC;
-    tx_1024_max_V_i       :out  STD_LOGIC_VECTOR(63 downto 0);
-    tx_1024_max_V_o       :in   STD_LOGIC_VECTOR(63 downto 0);
-    tx_1024_max_V_o_ap_vld :in   STD_LOGIC
+    dummy_last_V_o_ap_vld :in   STD_LOGIC
 );
 end entity axi_lite_axi_lite_bus_s_axi;
 
 -- ------------------------Address Info-------------------
--- 0x000 : Control signals
---         bit 0  - ap_start (Read/Write/COH)
---         bit 1  - ap_done (Read/COR)
---         bit 2  - ap_idle (Read)
---         bit 3  - ap_ready (Read)
---         bit 7  - auto_restart (Read/Write)
---         others - reserved
--- 0x004 : Global Interrupt Enable Register
---         bit 0  - Global Interrupt Enable (Read/Write)
---         others - reserved
--- 0x008 : IP Interrupt Enable Register (Read/Write)
---         bit 0  - Channel 0 (ap_done)
---         bit 1  - Channel 1 (ap_ready)
---         others - reserved
--- 0x00c : IP Interrupt Status Register (Read/TOW)
---         bit 0  - Channel 0 (ap_done)
---         bit 1  - Channel 1 (ap_ready)
---         others - reserved
--- 0x258 : Data signal of tx_64_V_i
---         bit 31~0 - tx_64_V_i[31:0] (Read/Write)
--- 0x25c : Data signal of tx_64_V_i
---         bit 31~0 - tx_64_V_i[63:32] (Read/Write)
--- 0x260 : reserved
--- 0x264 : Data signal of tx_64_V_o
---         bit 31~0 - tx_64_V_o[31:0] (Read)
--- 0x268 : Data signal of tx_64_V_o
---         bit 31~0 - tx_64_V_o[63:32] (Read)
--- 0x26c : Control signal of tx_64_V_o
---         bit 0  - tx_64_V_o_ap_vld (Read/COR)
---         others - reserved
--- 0x270 : Data signal of tx_256_511_V_i
---         bit 31~0 - tx_256_511_V_i[31:0] (Read/Write)
--- 0x274 : Data signal of tx_256_511_V_i
---         bit 31~0 - tx_256_511_V_i[63:32] (Read/Write)
--- 0x278 : reserved
--- 0x27c : Data signal of tx_256_511_V_o
---         bit 31~0 - tx_256_511_V_o[31:0] (Read)
--- 0x280 : Data signal of tx_256_511_V_o
---         bit 31~0 - tx_256_511_V_o[63:32] (Read)
--- 0x284 : Control signal of tx_256_511_V_o
---         bit 0  - tx_256_511_V_o_ap_vld (Read/COR)
---         others - reserved
--- 0x754 : Data signal of dummy_last_V_i
+-- 0x000 : reserved
+-- 0x004 : reserved
+-- 0x008 : reserved
+-- 0x00c : reserved
+-- 0x200 : Data signal of rx_bytes_V
+--         bit 31~0 - rx_bytes_V[31:0] (Read)
+-- 0x204 : reserved
+-- 0x220 : Data signal of rx_64_V
+--         bit 31~0 - rx_64_V[31:0] (Read)
+-- 0x224 : reserved
+-- 0x228 : Data signal of rx_65_127_V
+--         bit 31~0 - rx_65_127_V[31:0] (Read)
+-- 0x22c : reserved
+-- 0x230 : Data signal of rx_128_255_V
+--         bit 31~0 - rx_128_255_V[31:0] (Read)
+-- 0x234 : reserved
+-- 0x238 : Data signal of rx_256_511_V
+--         bit 31~0 - rx_256_511_V[31:0] (Read)
+-- 0x23c : reserved
+-- 0x240 : Data signal of rx_512_1023_V
+--         bit 31~0 - rx_512_1023_V[31:0] (Read)
+-- 0x244 : reserved
+-- 0x248 : Data signal of rx_1024_max_V
+--         bit 31~0 - rx_1024_max_V[31:0] (Read)
+-- 0x24c : reserved
+-- 0x258 : Data signal of tx_64_V
+--         bit 31~0 - tx_64_V[31:0] (Read)
+-- 0x25c : reserved
+-- 0x260 : Data signal of tx_65_127_V
+--         bit 31~0 - tx_65_127_V[31:0] (Read)
+-- 0x264 : reserved
+-- 0x268 : Data signal of tx_128_255_V
+--         bit 31~0 - tx_128_255_V[31:0] (Read)
+-- 0x26c : reserved
+-- 0x270 : Data signal of tx_256_511_V
+--         bit 31~0 - tx_256_511_V[31:0] (Read)
+-- 0x274 : reserved
+-- 0x278 : Data signal of tx_512_1023_V
+--         bit 31~0 - tx_512_1023_V[31:0] (Read)
+-- 0x27c : reserved
+-- 0x280 : Data signal of tx_1024_max_V
+--         bit 31~0 - tx_1024_max_V[31:0] (Read)
+-- 0x284 : reserved
+-- 0x290 : Data signal of rx_good_V
+--         bit 31~0 - rx_good_V[31:0] (Read)
+-- 0x294 : reserved
+-- 0x4f0 : Data signal of dummy_last_V_i
 --         bit 31~0 - dummy_last_V_i[31:0] (Read/Write)
--- 0x758 : reserved
--- 0x75c : Data signal of dummy_last_V_o
+-- 0x4f4 : reserved
+-- 0x4f8 : Data signal of dummy_last_V_o
 --         bit 31~0 - dummy_last_V_o[31:0] (Read)
--- 0x760 : Control signal of dummy_last_V_o
+-- 0x4fc : Control signal of dummy_last_V_o
 --         bit 0  - dummy_last_V_o_ap_vld (Read/COR)
---         others - reserved
--- 0x010 : Data signal of tx_65_127_V_i
---         bit 31~0 - tx_65_127_V_i[31:0] (Read/Write)
--- 0x014 : Data signal of tx_65_127_V_i
---         bit 31~0 - tx_65_127_V_i[63:32] (Read/Write)
--- 0x018 : reserved
--- 0x01c : Data signal of tx_65_127_V_o
---         bit 31~0 - tx_65_127_V_o[31:0] (Read)
--- 0x020 : Data signal of tx_65_127_V_o
---         bit 31~0 - tx_65_127_V_o[63:32] (Read)
--- 0x024 : Control signal of tx_65_127_V_o
---         bit 0  - tx_65_127_V_o_ap_vld (Read/COR)
---         others - reserved
--- 0x028 : Data signal of tx_128_255_V_i
---         bit 31~0 - tx_128_255_V_i[31:0] (Read/Write)
--- 0x02c : Data signal of tx_128_255_V_i
---         bit 31~0 - tx_128_255_V_i[63:32] (Read/Write)
--- 0x030 : reserved
--- 0x034 : Data signal of tx_128_255_V_o
---         bit 31~0 - tx_128_255_V_o[31:0] (Read)
--- 0x038 : Data signal of tx_128_255_V_o
---         bit 31~0 - tx_128_255_V_o[63:32] (Read)
--- 0x03c : Control signal of tx_128_255_V_o
---         bit 0  - tx_128_255_V_o_ap_vld (Read/COR)
---         others - reserved
--- 0x040 : Data signal of tx_512_1023_V_i
---         bit 31~0 - tx_512_1023_V_i[31:0] (Read/Write)
--- 0x044 : Data signal of tx_512_1023_V_i
---         bit 31~0 - tx_512_1023_V_i[63:32] (Read/Write)
--- 0x048 : reserved
--- 0x04c : Data signal of tx_512_1023_V_o
---         bit 31~0 - tx_512_1023_V_o[31:0] (Read)
--- 0x050 : Data signal of tx_512_1023_V_o
---         bit 31~0 - tx_512_1023_V_o[63:32] (Read)
--- 0x054 : Control signal of tx_512_1023_V_o
---         bit 0  - tx_512_1023_V_o_ap_vld (Read/COR)
---         others - reserved
--- 0x058 : Data signal of tx_1024_max_V_i
---         bit 31~0 - tx_1024_max_V_i[31:0] (Read/Write)
--- 0x05c : Data signal of tx_1024_max_V_i
---         bit 31~0 - tx_1024_max_V_i[63:32] (Read/Write)
--- 0x060 : reserved
--- 0x064 : Data signal of tx_1024_max_V_o
---         bit 31~0 - tx_1024_max_V_o[31:0] (Read)
--- 0x068 : Data signal of tx_1024_max_V_o
---         bit 31~0 - tx_1024_max_V_o[63:32] (Read)
--- 0x06c : Control signal of tx_1024_max_V_o
---         bit 0  - tx_1024_max_V_o_ap_vld (Read/COR)
 --         others - reserved
 -- (SC = Self Clear, COR = Clear on Read, TOW = Toggle on Write, COH = Clear on Handshake)
 
 architecture behave of axi_lite_axi_lite_bus_s_axi is
     type states is (wridle, wrdata, wrresp, rdidle, rddata);  -- read and write fsm states
     signal wstate, wnext, rstate, rnext: states;
-    constant ADDR_AP_CTRL                : INTEGER := 16#000#;
-    constant ADDR_GIE                    : INTEGER := 16#004#;
-    constant ADDR_IER                    : INTEGER := 16#008#;
-    constant ADDR_ISR                    : INTEGER := 16#00c#;
-    constant ADDR_TX_64_V_I_DATA_0       : INTEGER := 16#258#;
-    constant ADDR_TX_64_V_I_DATA_1       : INTEGER := 16#25c#;
-    constant ADDR_TX_64_V_I_CTRL         : INTEGER := 16#260#;
-    constant ADDR_TX_64_V_O_DATA_0       : INTEGER := 16#264#;
-    constant ADDR_TX_64_V_O_DATA_1       : INTEGER := 16#268#;
-    constant ADDR_TX_64_V_O_CTRL         : INTEGER := 16#26c#;
-    constant ADDR_TX_256_511_V_I_DATA_0  : INTEGER := 16#270#;
-    constant ADDR_TX_256_511_V_I_DATA_1  : INTEGER := 16#274#;
-    constant ADDR_TX_256_511_V_I_CTRL    : INTEGER := 16#278#;
-    constant ADDR_TX_256_511_V_O_DATA_0  : INTEGER := 16#27c#;
-    constant ADDR_TX_256_511_V_O_DATA_1  : INTEGER := 16#280#;
-    constant ADDR_TX_256_511_V_O_CTRL    : INTEGER := 16#284#;
-    constant ADDR_DUMMY_LAST_V_I_DATA_0  : INTEGER := 16#754#;
-    constant ADDR_DUMMY_LAST_V_I_CTRL    : INTEGER := 16#758#;
-    constant ADDR_DUMMY_LAST_V_O_DATA_0  : INTEGER := 16#75c#;
-    constant ADDR_DUMMY_LAST_V_O_CTRL    : INTEGER := 16#760#;
-    constant ADDR_TX_65_127_V_I_DATA_0   : INTEGER := 16#010#;
-    constant ADDR_TX_65_127_V_I_DATA_1   : INTEGER := 16#014#;
-    constant ADDR_TX_65_127_V_I_CTRL     : INTEGER := 16#018#;
-    constant ADDR_TX_65_127_V_O_DATA_0   : INTEGER := 16#01c#;
-    constant ADDR_TX_65_127_V_O_DATA_1   : INTEGER := 16#020#;
-    constant ADDR_TX_65_127_V_O_CTRL     : INTEGER := 16#024#;
-    constant ADDR_TX_128_255_V_I_DATA_0  : INTEGER := 16#028#;
-    constant ADDR_TX_128_255_V_I_DATA_1  : INTEGER := 16#02c#;
-    constant ADDR_TX_128_255_V_I_CTRL    : INTEGER := 16#030#;
-    constant ADDR_TX_128_255_V_O_DATA_0  : INTEGER := 16#034#;
-    constant ADDR_TX_128_255_V_O_DATA_1  : INTEGER := 16#038#;
-    constant ADDR_TX_128_255_V_O_CTRL    : INTEGER := 16#03c#;
-    constant ADDR_TX_512_1023_V_I_DATA_0 : INTEGER := 16#040#;
-    constant ADDR_TX_512_1023_V_I_DATA_1 : INTEGER := 16#044#;
-    constant ADDR_TX_512_1023_V_I_CTRL   : INTEGER := 16#048#;
-    constant ADDR_TX_512_1023_V_O_DATA_0 : INTEGER := 16#04c#;
-    constant ADDR_TX_512_1023_V_O_DATA_1 : INTEGER := 16#050#;
-    constant ADDR_TX_512_1023_V_O_CTRL   : INTEGER := 16#054#;
-    constant ADDR_TX_1024_MAX_V_I_DATA_0 : INTEGER := 16#058#;
-    constant ADDR_TX_1024_MAX_V_I_DATA_1 : INTEGER := 16#05c#;
-    constant ADDR_TX_1024_MAX_V_I_CTRL   : INTEGER := 16#060#;
-    constant ADDR_TX_1024_MAX_V_O_DATA_0 : INTEGER := 16#064#;
-    constant ADDR_TX_1024_MAX_V_O_DATA_1 : INTEGER := 16#068#;
-    constant ADDR_TX_1024_MAX_V_O_CTRL   : INTEGER := 16#06c#;
+    constant ADDR_RX_BYTES_V_DATA_0     : INTEGER := 16#200#;
+    constant ADDR_RX_BYTES_V_CTRL       : INTEGER := 16#204#;
+    constant ADDR_RX_64_V_DATA_0        : INTEGER := 16#220#;
+    constant ADDR_RX_64_V_CTRL          : INTEGER := 16#224#;
+    constant ADDR_RX_65_127_V_DATA_0    : INTEGER := 16#228#;
+    constant ADDR_RX_65_127_V_CTRL      : INTEGER := 16#22c#;
+    constant ADDR_RX_128_255_V_DATA_0   : INTEGER := 16#230#;
+    constant ADDR_RX_128_255_V_CTRL     : INTEGER := 16#234#;
+    constant ADDR_RX_256_511_V_DATA_0   : INTEGER := 16#238#;
+    constant ADDR_RX_256_511_V_CTRL     : INTEGER := 16#23c#;
+    constant ADDR_RX_512_1023_V_DATA_0  : INTEGER := 16#240#;
+    constant ADDR_RX_512_1023_V_CTRL    : INTEGER := 16#244#;
+    constant ADDR_RX_1024_MAX_V_DATA_0  : INTEGER := 16#248#;
+    constant ADDR_RX_1024_MAX_V_CTRL    : INTEGER := 16#24c#;
+    constant ADDR_TX_64_V_DATA_0        : INTEGER := 16#258#;
+    constant ADDR_TX_64_V_CTRL          : INTEGER := 16#25c#;
+    constant ADDR_TX_65_127_V_DATA_0    : INTEGER := 16#260#;
+    constant ADDR_TX_65_127_V_CTRL      : INTEGER := 16#264#;
+    constant ADDR_TX_128_255_V_DATA_0   : INTEGER := 16#268#;
+    constant ADDR_TX_128_255_V_CTRL     : INTEGER := 16#26c#;
+    constant ADDR_TX_256_511_V_DATA_0   : INTEGER := 16#270#;
+    constant ADDR_TX_256_511_V_CTRL     : INTEGER := 16#274#;
+    constant ADDR_TX_512_1023_V_DATA_0  : INTEGER := 16#278#;
+    constant ADDR_TX_512_1023_V_CTRL    : INTEGER := 16#27c#;
+    constant ADDR_TX_1024_MAX_V_DATA_0  : INTEGER := 16#280#;
+    constant ADDR_TX_1024_MAX_V_CTRL    : INTEGER := 16#284#;
+    constant ADDR_RX_GOOD_V_DATA_0      : INTEGER := 16#290#;
+    constant ADDR_RX_GOOD_V_CTRL        : INTEGER := 16#294#;
+    constant ADDR_DUMMY_LAST_V_I_DATA_0 : INTEGER := 16#4f0#;
+    constant ADDR_DUMMY_LAST_V_I_CTRL   : INTEGER := 16#4f4#;
+    constant ADDR_DUMMY_LAST_V_O_DATA_0 : INTEGER := 16#4f8#;
+    constant ADDR_DUMMY_LAST_V_O_CTRL   : INTEGER := 16#4fc#;
     constant ADDR_BITS         : INTEGER := 11;
 
     signal waddr               : UNSIGNED(ADDR_BITS-1 downto 0);
@@ -227,35 +162,23 @@ architecture behave of axi_lite_axi_lite_bus_s_axi is
     signal ARREADY_t           : STD_LOGIC;
     signal RVALID_t            : STD_LOGIC;
     -- internal registers
-    signal int_ap_idle         : STD_LOGIC;
-    signal int_ap_ready        : STD_LOGIC;
-    signal int_ap_done         : STD_LOGIC;
-    signal int_ap_start        : STD_LOGIC;
-    signal int_auto_restart    : STD_LOGIC;
-    signal int_gie             : STD_LOGIC;
-    signal int_ier             : UNSIGNED(1 downto 0);
-    signal int_isr             : UNSIGNED(1 downto 0);
-    signal int_tx_64_V_i       : UNSIGNED(63 downto 0);
-    signal int_tx_64_V_o       : UNSIGNED(63 downto 0);
-    signal int_tx_64_V_o_ap_vld : STD_LOGIC;
-    signal int_tx_256_511_V_i  : UNSIGNED(63 downto 0);
-    signal int_tx_256_511_V_o  : UNSIGNED(63 downto 0);
-    signal int_tx_256_511_V_o_ap_vld : STD_LOGIC;
+    signal int_rx_bytes_V      : UNSIGNED(31 downto 0);
+    signal int_rx_64_V         : UNSIGNED(31 downto 0);
+    signal int_rx_65_127_V     : UNSIGNED(31 downto 0);
+    signal int_rx_128_255_V    : UNSIGNED(31 downto 0);
+    signal int_rx_256_511_V    : UNSIGNED(31 downto 0);
+    signal int_rx_512_1023_V   : UNSIGNED(31 downto 0);
+    signal int_rx_1024_max_V   : UNSIGNED(31 downto 0);
+    signal int_tx_64_V         : UNSIGNED(31 downto 0);
+    signal int_tx_65_127_V     : UNSIGNED(31 downto 0);
+    signal int_tx_128_255_V    : UNSIGNED(31 downto 0);
+    signal int_tx_256_511_V    : UNSIGNED(31 downto 0);
+    signal int_tx_512_1023_V   : UNSIGNED(31 downto 0);
+    signal int_tx_1024_max_V   : UNSIGNED(31 downto 0);
+    signal int_rx_good_V       : UNSIGNED(31 downto 0);
     signal int_dummy_last_V_i  : UNSIGNED(31 downto 0);
     signal int_dummy_last_V_o  : UNSIGNED(31 downto 0);
     signal int_dummy_last_V_o_ap_vld : STD_LOGIC;
-    signal int_tx_65_127_V_i   : UNSIGNED(63 downto 0);
-    signal int_tx_65_127_V_o   : UNSIGNED(63 downto 0);
-    signal int_tx_65_127_V_o_ap_vld : STD_LOGIC;
-    signal int_tx_128_255_V_i  : UNSIGNED(63 downto 0);
-    signal int_tx_128_255_V_o  : UNSIGNED(63 downto 0);
-    signal int_tx_128_255_V_o_ap_vld : STD_LOGIC;
-    signal int_tx_512_1023_V_i : UNSIGNED(63 downto 0);
-    signal int_tx_512_1023_V_o : UNSIGNED(63 downto 0);
-    signal int_tx_512_1023_V_o_ap_vld : STD_LOGIC;
-    signal int_tx_1024_max_V_i : UNSIGNED(63 downto 0);
-    signal int_tx_1024_max_V_o : UNSIGNED(63 downto 0);
-    signal int_tx_1024_max_V_o_ap_vld : STD_LOGIC;
 
 
 begin
@@ -366,80 +289,40 @@ begin
         if (ACLK'event and ACLK = '1') and ACLK_EN = '1' then
             if (ar_hs = '1') then
                 case (TO_INTEGER(raddr)) is
-                when ADDR_AP_CTRL =>
-                    rdata_data <= (7 => int_auto_restart, 3 => int_ap_ready, 2 => int_ap_idle, 1 => int_ap_done, 0 => int_ap_start, others => '0');
-                when ADDR_GIE =>
-                    rdata_data <= (0 => int_gie, others => '0');
-                when ADDR_IER =>
-                    rdata_data <= (1 => int_ier(1), 0 => int_ier(0), others => '0');
-                when ADDR_ISR =>
-                    rdata_data <= (1 => int_isr(1), 0 => int_isr(0), others => '0');
-                when ADDR_TX_64_V_I_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_64_V_i(31 downto 0), 32);
-                when ADDR_TX_64_V_I_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_64_V_i(63 downto 32), 32);
-                when ADDR_TX_64_V_O_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_64_V_o(31 downto 0), 32);
-                when ADDR_TX_64_V_O_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_64_V_o(63 downto 32), 32);
-                when ADDR_TX_64_V_O_CTRL =>
-                    rdata_data <= (0 => int_tx_64_V_o_ap_vld, others => '0');
-                when ADDR_TX_256_511_V_I_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_256_511_V_i(31 downto 0), 32);
-                when ADDR_TX_256_511_V_I_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_256_511_V_i(63 downto 32), 32);
-                when ADDR_TX_256_511_V_O_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_256_511_V_o(31 downto 0), 32);
-                when ADDR_TX_256_511_V_O_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_256_511_V_o(63 downto 32), 32);
-                when ADDR_TX_256_511_V_O_CTRL =>
-                    rdata_data <= (0 => int_tx_256_511_V_o_ap_vld, others => '0');
+                when ADDR_RX_BYTES_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_bytes_V(31 downto 0), 32);
+                when ADDR_RX_64_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_64_V(31 downto 0), 32);
+                when ADDR_RX_65_127_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_65_127_V(31 downto 0), 32);
+                when ADDR_RX_128_255_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_128_255_V(31 downto 0), 32);
+                when ADDR_RX_256_511_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_256_511_V(31 downto 0), 32);
+                when ADDR_RX_512_1023_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_512_1023_V(31 downto 0), 32);
+                when ADDR_RX_1024_MAX_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_1024_max_V(31 downto 0), 32);
+                when ADDR_TX_64_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_tx_64_V(31 downto 0), 32);
+                when ADDR_TX_65_127_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_tx_65_127_V(31 downto 0), 32);
+                when ADDR_TX_128_255_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_tx_128_255_V(31 downto 0), 32);
+                when ADDR_TX_256_511_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_tx_256_511_V(31 downto 0), 32);
+                when ADDR_TX_512_1023_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_tx_512_1023_V(31 downto 0), 32);
+                when ADDR_TX_1024_MAX_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_tx_1024_max_V(31 downto 0), 32);
+                when ADDR_RX_GOOD_V_DATA_0 =>
+                    rdata_data <= RESIZE(int_rx_good_V(31 downto 0), 32);
                 when ADDR_DUMMY_LAST_V_I_DATA_0 =>
                     rdata_data <= RESIZE(int_dummy_last_V_i(31 downto 0), 32);
                 when ADDR_DUMMY_LAST_V_O_DATA_0 =>
                     rdata_data <= RESIZE(int_dummy_last_V_o(31 downto 0), 32);
                 when ADDR_DUMMY_LAST_V_O_CTRL =>
                     rdata_data <= (0 => int_dummy_last_V_o_ap_vld, others => '0');
-                when ADDR_TX_65_127_V_I_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_65_127_V_i(31 downto 0), 32);
-                when ADDR_TX_65_127_V_I_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_65_127_V_i(63 downto 32), 32);
-                when ADDR_TX_65_127_V_O_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_65_127_V_o(31 downto 0), 32);
-                when ADDR_TX_65_127_V_O_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_65_127_V_o(63 downto 32), 32);
-                when ADDR_TX_65_127_V_O_CTRL =>
-                    rdata_data <= (0 => int_tx_65_127_V_o_ap_vld, others => '0');
-                when ADDR_TX_128_255_V_I_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_128_255_V_i(31 downto 0), 32);
-                when ADDR_TX_128_255_V_I_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_128_255_V_i(63 downto 32), 32);
-                when ADDR_TX_128_255_V_O_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_128_255_V_o(31 downto 0), 32);
-                when ADDR_TX_128_255_V_O_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_128_255_V_o(63 downto 32), 32);
-                when ADDR_TX_128_255_V_O_CTRL =>
-                    rdata_data <= (0 => int_tx_128_255_V_o_ap_vld, others => '0');
-                when ADDR_TX_512_1023_V_I_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_512_1023_V_i(31 downto 0), 32);
-                when ADDR_TX_512_1023_V_I_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_512_1023_V_i(63 downto 32), 32);
-                when ADDR_TX_512_1023_V_O_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_512_1023_V_o(31 downto 0), 32);
-                when ADDR_TX_512_1023_V_O_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_512_1023_V_o(63 downto 32), 32);
-                when ADDR_TX_512_1023_V_O_CTRL =>
-                    rdata_data <= (0 => int_tx_512_1023_V_o_ap_vld, others => '0');
-                when ADDR_TX_1024_MAX_V_I_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_1024_max_V_i(31 downto 0), 32);
-                when ADDR_TX_1024_MAX_V_I_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_1024_max_V_i(63 downto 32), 32);
-                when ADDR_TX_1024_MAX_V_O_DATA_0 =>
-                    rdata_data <= RESIZE(int_tx_1024_max_V_o(31 downto 0), 32);
-                when ADDR_TX_1024_MAX_V_O_DATA_1 =>
-                    rdata_data <= RESIZE(int_tx_1024_max_V_o(63 downto 32), 32);
-                when ADDR_TX_1024_MAX_V_O_CTRL =>
-                    rdata_data <= (0 => int_tx_1024_max_V_o_ap_vld, others => '0');
                 when others =>
                     rdata_data <= (others => '0');
                 end case;
@@ -448,28 +331,16 @@ begin
     end process;
 
 -- ----------------------- Register logic ----------------
-    interrupt            <= int_gie and (int_isr(0) or int_isr(1));
-    ap_start             <= int_ap_start;
-    int_ap_idle          <= ap_idle;
-    int_ap_ready         <= ap_ready;
-    tx_64_V_i            <= STD_LOGIC_VECTOR(int_tx_64_V_i);
-    tx_256_511_V_i       <= STD_LOGIC_VECTOR(int_tx_256_511_V_i);
     dummy_last_V_i       <= STD_LOGIC_VECTOR(int_dummy_last_V_i);
-    tx_65_127_V_i        <= STD_LOGIC_VECTOR(int_tx_65_127_V_i);
-    tx_128_255_V_i       <= STD_LOGIC_VECTOR(int_tx_128_255_V_i);
-    tx_512_1023_V_i      <= STD_LOGIC_VECTOR(int_tx_512_1023_V_i);
-    tx_1024_max_V_i      <= STD_LOGIC_VECTOR(int_tx_1024_max_V_i);
 
     process (ACLK)
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_ap_start <= '0';
+                int_rx_bytes_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_AP_CTRL and WSTRB(0) = '1' and WDATA(0) = '1') then
-                    int_ap_start <= '1';
-                elsif (int_ap_ready = '1') then
-                    int_ap_start <= int_auto_restart; -- clear on handshake/auto restart
+                if (true) then
+                    int_rx_bytes_V <= UNSIGNED(rx_bytes_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -479,12 +350,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_ap_done <= '0';
+                int_rx_64_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (ap_done = '1') then
-                    int_ap_done <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_AP_CTRL) then
-                    int_ap_done <= '0'; -- clear on read
+                if (true) then
+                    int_rx_64_V <= UNSIGNED(rx_64_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -494,10 +363,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_auto_restart <= '0';
+                int_rx_65_127_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_AP_CTRL and WSTRB(0) = '1') then
-                    int_auto_restart <= WDATA(7);
+                if (true) then
+                    int_rx_65_127_V <= UNSIGNED(rx_65_127_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -507,10 +376,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_gie <= '0';
+                int_rx_128_255_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_GIE and WSTRB(0) = '1') then
-                    int_gie <= WDATA(0);
+                if (true) then
+                    int_rx_128_255_V <= UNSIGNED(rx_128_255_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -520,10 +389,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_ier <= "00";
+                int_rx_256_511_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_IER and WSTRB(0) = '1') then
-                    int_ier <= UNSIGNED(WDATA(1 downto 0));
+                if (true) then
+                    int_rx_256_511_V <= UNSIGNED(rx_256_511_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -533,12 +402,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_isr(0) <= '0';
+                int_rx_512_1023_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (int_ier(0) = '1' and ap_done = '1') then
-                    int_isr(0) <= '1';
-                elsif (w_hs = '1' and waddr = ADDR_ISR and WSTRB(0) = '1') then
-                    int_isr(0) <= int_isr(0) xor WDATA(0); -- toggle on write
+                if (true) then
+                    int_rx_512_1023_V <= UNSIGNED(rx_512_1023_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -548,34 +415,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_isr(1) <= '0';
+                int_rx_1024_max_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (int_ier(1) = '1' and ap_ready = '1') then
-                    int_isr(1) <= '1';
-                elsif (w_hs = '1' and waddr = ADDR_ISR and WSTRB(0) = '1') then
-                    int_isr(1) <= int_isr(1) xor WDATA(1); -- toggle on write
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_64_V_I_DATA_0) then
-                    int_tx_64_V_i(31 downto 0) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_64_V_i(31 downto 0));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_64_V_I_DATA_1) then
-                    int_tx_64_V_i(63 downto 32) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_64_V_i(63 downto 32));
+                if (true) then
+                    int_rx_1024_max_V <= UNSIGNED(rx_1024_max_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -585,10 +428,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_tx_64_V_o <= (others => '0');
+                int_tx_64_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (tx_64_V_o_ap_vld = '1') then
-                    int_tx_64_V_o <= UNSIGNED(tx_64_V_o); -- clear on read
+                if (true) then
+                    int_tx_64_V <= UNSIGNED(tx_64_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -598,34 +441,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_tx_64_V_o_ap_vld <= '0';
+                int_tx_65_127_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (tx_64_V_o_ap_vld = '1') then
-                    int_tx_64_V_o_ap_vld <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_TX_64_V_O_CTRL) then
-                    int_tx_64_V_o_ap_vld <= '0'; -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_256_511_V_I_DATA_0) then
-                    int_tx_256_511_V_i(31 downto 0) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_256_511_V_i(31 downto 0));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_256_511_V_I_DATA_1) then
-                    int_tx_256_511_V_i(63 downto 32) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_256_511_V_i(63 downto 32));
+                if (true) then
+                    int_tx_65_127_V <= UNSIGNED(tx_65_127_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -635,10 +454,10 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_tx_256_511_V_o <= (others => '0');
+                int_tx_128_255_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (tx_256_511_V_o_ap_vld = '1') then
-                    int_tx_256_511_V_o <= UNSIGNED(tx_256_511_V_o); -- clear on read
+                if (true) then
+                    int_tx_128_255_V <= UNSIGNED(tx_128_255_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -648,12 +467,49 @@ begin
     begin
         if (ACLK'event and ACLK = '1') then
             if (ARESET = '1') then
-                int_tx_256_511_V_o_ap_vld <= '0';
+                int_tx_256_511_V <= (others => '0');
             elsif (ACLK_EN = '1') then
-                if (tx_256_511_V_o_ap_vld = '1') then
-                    int_tx_256_511_V_o_ap_vld <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_TX_256_511_V_O_CTRL) then
-                    int_tx_256_511_V_o_ap_vld <= '0'; -- clear on read
+                if (true) then
+                    int_tx_256_511_V <= UNSIGNED(tx_256_511_V); -- clear on read
+                end if;
+            end if;
+        end if;
+    end process;
+
+    process (ACLK)
+    begin
+        if (ACLK'event and ACLK = '1') then
+            if (ARESET = '1') then
+                int_tx_512_1023_V <= (others => '0');
+            elsif (ACLK_EN = '1') then
+                if (true) then
+                    int_tx_512_1023_V <= UNSIGNED(tx_512_1023_V); -- clear on read
+                end if;
+            end if;
+        end if;
+    end process;
+
+    process (ACLK)
+    begin
+        if (ACLK'event and ACLK = '1') then
+            if (ARESET = '1') then
+                int_tx_1024_max_V <= (others => '0');
+            elsif (ACLK_EN = '1') then
+                if (true) then
+                    int_tx_1024_max_V <= UNSIGNED(tx_1024_max_V); -- clear on read
+                end if;
+            end if;
+        end if;
+    end process;
+
+    process (ACLK)
+    begin
+        if (ACLK'event and ACLK = '1') then
+            if (ARESET = '1') then
+                int_rx_good_V <= (others => '0');
+            elsif (ACLK_EN = '1') then
+                if (true) then
+                    int_rx_good_V <= UNSIGNED(rx_good_V); -- clear on read
                 end if;
             end if;
         end if;
@@ -693,206 +549,6 @@ begin
                     int_dummy_last_V_o_ap_vld <= '1';
                 elsif (ar_hs = '1' and raddr = ADDR_DUMMY_LAST_V_O_CTRL) then
                     int_dummy_last_V_o_ap_vld <= '0'; -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_65_127_V_I_DATA_0) then
-                    int_tx_65_127_V_i(31 downto 0) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_65_127_V_i(31 downto 0));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_65_127_V_I_DATA_1) then
-                    int_tx_65_127_V_i(63 downto 32) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_65_127_V_i(63 downto 32));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_65_127_V_o <= (others => '0');
-            elsif (ACLK_EN = '1') then
-                if (tx_65_127_V_o_ap_vld = '1') then
-                    int_tx_65_127_V_o <= UNSIGNED(tx_65_127_V_o); -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_65_127_V_o_ap_vld <= '0';
-            elsif (ACLK_EN = '1') then
-                if (tx_65_127_V_o_ap_vld = '1') then
-                    int_tx_65_127_V_o_ap_vld <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_TX_65_127_V_O_CTRL) then
-                    int_tx_65_127_V_o_ap_vld <= '0'; -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_128_255_V_I_DATA_0) then
-                    int_tx_128_255_V_i(31 downto 0) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_128_255_V_i(31 downto 0));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_128_255_V_I_DATA_1) then
-                    int_tx_128_255_V_i(63 downto 32) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_128_255_V_i(63 downto 32));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_128_255_V_o <= (others => '0');
-            elsif (ACLK_EN = '1') then
-                if (tx_128_255_V_o_ap_vld = '1') then
-                    int_tx_128_255_V_o <= UNSIGNED(tx_128_255_V_o); -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_128_255_V_o_ap_vld <= '0';
-            elsif (ACLK_EN = '1') then
-                if (tx_128_255_V_o_ap_vld = '1') then
-                    int_tx_128_255_V_o_ap_vld <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_TX_128_255_V_O_CTRL) then
-                    int_tx_128_255_V_o_ap_vld <= '0'; -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_512_1023_V_I_DATA_0) then
-                    int_tx_512_1023_V_i(31 downto 0) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_512_1023_V_i(31 downto 0));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_512_1023_V_I_DATA_1) then
-                    int_tx_512_1023_V_i(63 downto 32) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_512_1023_V_i(63 downto 32));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_512_1023_V_o <= (others => '0');
-            elsif (ACLK_EN = '1') then
-                if (tx_512_1023_V_o_ap_vld = '1') then
-                    int_tx_512_1023_V_o <= UNSIGNED(tx_512_1023_V_o); -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_512_1023_V_o_ap_vld <= '0';
-            elsif (ACLK_EN = '1') then
-                if (tx_512_1023_V_o_ap_vld = '1') then
-                    int_tx_512_1023_V_o_ap_vld <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_TX_512_1023_V_O_CTRL) then
-                    int_tx_512_1023_V_o_ap_vld <= '0'; -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_1024_MAX_V_I_DATA_0) then
-                    int_tx_1024_max_V_i(31 downto 0) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_1024_max_V_i(31 downto 0));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ACLK_EN = '1') then
-                if (w_hs = '1' and waddr = ADDR_TX_1024_MAX_V_I_DATA_1) then
-                    int_tx_1024_max_V_i(63 downto 32) <= (UNSIGNED(WDATA(31 downto 0)) and wmask(31 downto 0)) or ((not wmask(31 downto 0)) and int_tx_1024_max_V_i(63 downto 32));
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_1024_max_V_o <= (others => '0');
-            elsif (ACLK_EN = '1') then
-                if (tx_1024_max_V_o_ap_vld = '1') then
-                    int_tx_1024_max_V_o <= UNSIGNED(tx_1024_max_V_o); -- clear on read
-                end if;
-            end if;
-        end if;
-    end process;
-
-    process (ACLK)
-    begin
-        if (ACLK'event and ACLK = '1') then
-            if (ARESET = '1') then
-                int_tx_1024_max_V_o_ap_vld <= '0';
-            elsif (ACLK_EN = '1') then
-                if (tx_1024_max_V_o_ap_vld = '1') then
-                    int_tx_1024_max_V_o_ap_vld <= '1';
-                elsif (ar_hs = '1' and raddr = ADDR_TX_1024_MAX_V_O_CTRL) then
-                    int_tx_1024_max_V_o_ap_vld <= '0'; -- clear on read
                 end if;
             end if;
         end if;

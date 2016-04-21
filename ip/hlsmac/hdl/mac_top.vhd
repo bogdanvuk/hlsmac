@@ -105,9 +105,13 @@ entity mac is
 end mac;
 
 architecture rtl of mac is
+    attribute mark_debug : string;
     signal m_gmii_V_din     : STD_LOGIC_VECTOR (9 downto 0);
-    signal tx_status        : STD_LOGIC_VECTOR (19 downto 0);
-    signal tx_status_vld    : STD_LOGIC;
+    signal tx_status        : STD_LOGIC_VECTOR (19 downto 0); attribute mark_debug of tx_status : signal is "true";
+    signal tx_status_vld    : STD_LOGIC; attribute mark_debug of tx_status_vld : signal is "true";
+    signal rx_status        : STD_LOGIC_VECTOR (22 downto 0); attribute mark_debug of rx_status : signal is "true";
+    signal rx_status_vld    : STD_LOGIC; attribute mark_debug of rx_status_vld : signal is "true";
+
 begin
     transmit_i: entity work.transmit
         port map (
@@ -141,8 +145,8 @@ begin
             m_axis_TREADY    => '1',
             m_axis_TUSER(0)     => m_axis_tuser,
             m_axis_TLAST(0)     => m_axis_tlast,
-            rx_status        => open,
-            rx_status_ap_vld => open);
+            rx_status        => rx_status,
+            rx_status_ap_vld => rx_status_vld);
 
     axi_lite_gen : if axi_lite_config_g = 1 generate
         --! @brief Control and statistic registers accessed over axi lite interface.
@@ -169,8 +173,10 @@ begin
                 s_axi_axi_lite_bus_rready  => s_axi_lite_rready,
                 tx_status_V_dout       => tx_status,
                 tx_status_V_empty_n    => tx_status_vld,
-                tx_status_V_read       => open
-
+                tx_status_V_read       => open,
+                rx_status_V_dout       => rx_status,
+                rx_status_V_empty_n    => rx_status_vld,
+                rx_status_V_read       => open
                 );
     end generate axi_lite_gen;    
     
