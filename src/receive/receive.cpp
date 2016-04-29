@@ -11,8 +11,8 @@
 
 #define replace_byte(w, b, pos) ((w) & (~(0xffL << (pos)*8))) | ((((ap_uint<64>) b) & 0xff) << (pos)*8)
 #define wbit(w, pos) (((w) >> (pos)) & 0x1)
-#define wbyte(w, pos) (((w) >> (8*pos)) & 0xff)
-#define mask_up_to_bit(w, pos) (((ap_uint<w>) -1) >> (w - pos - 1))
+#define wbyte(w, pos) (((w) >> (8*(pos))) & 0xff)
+#define mask_up_to_bit(w, pos) (((ap_uint<w>) -1) >> ((w) - (pos) - 1))
 
 void receive(
              hls::stream<t_s_xgmii> &s_xgmii,
@@ -164,7 +164,7 @@ void receive(
                 }
             }
 
-            crc32<ap_uint<64>>(crc_data, &crc_state);
+            crc32(crc_data, &crc_state);
             // printf("RXD 0x%016lx, RXC 0x%02x, CRC_DATA 0x%016lx, crc_field_mask 0x%02x, CRC_STATE 0x%08lx, FRMEND %d\n", cur.rxd.to_long(), cur.rxc.to_int(), crc_data.to_long(), crc_field_mask.to_int(), crc_state.to_int(), frame_end_detected);
             //// printf("RXD 0x%016lx, RXC 0x%02x, CRC_STATE 0x%08lx, FRMEND %d\n", cur.rxd.to_long(), cur.rxc.to_int(), crc_state.to_int(), frame_end_detected);
 
