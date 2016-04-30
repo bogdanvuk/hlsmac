@@ -1,5 +1,5 @@
 #include "receive.hpp"
-#include "fcs.hpp"
+#include "crc32.hpp"
 #include "ap_shift_reg.h"
 
 #include <stdio.h>
@@ -19,11 +19,11 @@ static ap_shift_reg<t_s_gmii, 5> pipeline;
 
 void receive(
              hls::stream<t_s_gmii> &s_gmii,
-             hls::stream<t_axis> &m_axis, 
+             hls::stream<t_axis> &m_axis,
              t_rx_status* rx_status
-             ) 
+             )
 {
-    
+
 #pragma HLS interface ap_ctrl_none port=return
 #pragma HLS data_pack variable=s_gmii
 #pragma HLS INTERFACE axis port=m_axis
