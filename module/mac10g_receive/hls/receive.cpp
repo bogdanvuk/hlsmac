@@ -1,5 +1,5 @@
 #include "receive.hpp"
-#include "fcs.hpp"
+#include "crc32.hpp"
 #include "ap_shift_reg.h"
 
 #include <stdio.h>

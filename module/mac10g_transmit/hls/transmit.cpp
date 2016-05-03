@@ -1,5 +1,5 @@
 #include "transmit.hpp"
-#include "fcs.hpp"
+#include "crc32.hpp"
 #include "ap_utils.h"
 
 //#define RELEASE
