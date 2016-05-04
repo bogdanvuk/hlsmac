@@ -15,13 +15,14 @@ typedef struct {
 
 #define gmii_out(d, en, err) m_gmii.write((t_m_gmii){d, en, err})
 
-#define fcs_cover_gmii_data_out(d, err)         \
-    do {                                        \
-        frm_err |= err;                         \
-        frm_cnt++;                              \
-        crc32(d, &crc_state);                   \
-        gmii_out(d, 1, err);                    \
-    } while(0)
+void fcs_cover_gmii_data_out(ap_uint<8> d, int err, int* frm_err, int* frm_cnt, ap_uint<32> *crc_state, hls::stream<t_m_gmii> &m_gmii) {
+#pragma HLS LATENCY max=0 min=0
+#pragma HLS inline
+	*frm_err |= err;
+	*frm_cnt++;
+	crc32(d, crc_state);
+	gmii_out(d, 1, err);
+}
 
 #define gmii_data_out(d) gmii_out(d, 1, 0)
 
@@ -70,19 +71,21 @@ MAIN: while (1) {
         gmii_data_out(SFD_CHAR);
 
     DATA: while(!din.last){
+#pragma HLS LATENCY max=0 min=0
             ap_uint<8> data;
 
-            fcs_cover_gmii_data_out(din.data, din.user);
+            fcs_cover_gmii_data_out(din.data, din.user, &frm_err, &frm_cnt, &crc_state, m_gmii);
             if (!s_axis.read_nb(din)) return;
         }
 
-        fcs_cover_gmii_data_out(din.data, din.user);
+        fcs_cover_gmii_data_out(din.data, din.user, &frm_err, &frm_cnt, &crc_state, m_gmii);
 
     PAD: while (frm_cnt < 60) {
-            fcs_cover_gmii_data_out((ap_uint<8>) 0x00, 0);
+            fcs_cover_gmii_data_out((ap_uint<8>) 0x00, 0, &frm_err, &frm_cnt, &crc_state, m_gmii);
         }
 
     FCS: for (i = 0; i < 4; i++) {
+#pragma HLS LATENCY max=0 min=0
             gmii_data_out((~crc_state) & 0xff);
             frm_cnt++;
             crc_state >>= 8;

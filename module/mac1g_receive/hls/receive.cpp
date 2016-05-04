@@ -24,8 +24,10 @@ void receive(
              )
 {
 
+#ifdef RELEASE
 #pragma HLS interface ap_ctrl_none port=return
 #pragma HLS data_pack variable=s_gmii
+#endif
 #pragma HLS INTERFACE axis port=m_axis
 #pragma HLS data_pack variable=rx_status
 #pragma HLS INTERFACE ap_ovld port=rx_status

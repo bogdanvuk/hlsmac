@@ -5,6 +5,7 @@
 
 template<class T>
 void crc32(T din, ap_uint<32> *crc_state){
+#pragma HLS LATENCY max=0 min=0
 	unsigned j;
 	ap_uint<32> state = *crc_state;
 

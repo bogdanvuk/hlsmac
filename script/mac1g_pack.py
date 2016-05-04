@@ -26,7 +26,13 @@ ipprj = VivadoIpProjectBuild(name     = 'ippack',
                            prjdir   = FileBuild(os.path.join('$BUILDDIR', 'mac1g_pack', 'ippack')),
                            ipdir    = FileBuild('$BUILDDIR/ip/mac1g'),
                            sources  = {'sources_1': hdl_fileset},
-                           ipconfig = {'vendor' : 'bogdanvuk.org', 'name': 'hlsmac1g', 'library': 'ip', 'display_name': '{HLS 1G MAC}'}, 
+                           ipconfig = {'vendor' : 'bogdanvuk.org', 
+                                       'name': 'hlsmac1g', 
+                                       'library': 'ip', 
+                                       'display_name': '{HLS 1G MAC}',
+                                       'supported_families' : '{{kintex7} {Pre-Production} {zynq} {Pre-Production}}'
+                                   }, 
+                           tclpack  = FileBuild('$SRCDIR/module/mac1g_top/script/ippack.tcl'),
                            env      = dict(BUILDNAME="ippack"))
 
 ip = VivadoIpBuild(ipprj=ipprj)

@@ -61,7 +61,7 @@ int main()
   hls::stream<t_axis> m_axis;
   hls::stream<t_m_gmii> m_gmii;
   int correct_frames = 0;
-  t_tx_status tx_status;
+  hls::stream<t_tx_status> tx_status_stream;
 
   for (j = 0; j < FRAMES_CNT; j++) {
     //Put data into A
@@ -71,10 +71,13 @@ int main()
     }
   }
 
-  transmit(m_axis, m_gmii, &tx_status);
+  transmit(m_axis, m_gmii, tx_status_stream);
 
   while (!m_gmii.empty()) {
      t_m_gmii gmii = m_gmii.read();
+     if (!tx_status_stream.empty()) {
+	     t_tx_status tx_status = tx_status_stream.read();
+	 }
      if (gmii.en == 1) {
 		 if ((gmii.txd == 0x55) || (gmii.txd == 0xd5)) {
 			 printf("PP: Data 0x%x, EN %d, USER %d\n", gmii.txd.to_int(), gmii.en.to_int(), gmii.er.to_int());
