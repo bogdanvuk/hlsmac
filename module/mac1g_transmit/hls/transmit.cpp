@@ -8,21 +8,15 @@
 #define PREAMBLE_CHAR 0x55
 #define SFD_CHAR      0xd5
 
-typedef struct {
-    int a;
-    int b;
-}dout_t;
-
 #define gmii_out(d, en, err) m_gmii.write((t_m_gmii){d, en, err})
 
-void fcs_cover_gmii_data_out(ap_uint<8> d, int err, int* frm_err, int* frm_cnt, ap_uint<32> *crc_state, hls::stream<t_m_gmii> &m_gmii) {
-#pragma HLS LATENCY max=0 min=0
-#pragma HLS inline
-	*frm_err |= err;
-	*frm_cnt++;
-	crc32(d, crc_state);
-	gmii_out(d, 1, err);
-}
+#define fcs_cover_gmii_data_out(d, err)         \
+    do {                                        \
+        frm_err |= err;                         \
+        frm_cnt++;                              \
+        crc32(d, &crc_state);                   \
+        gmii_out(d, 1, err);                    \
+    } while(0)
 
 #define gmii_data_out(d) gmii_out(d, 1, 0)
 
@@ -62,6 +56,8 @@ IDLE_ONCE:  idle_out_loop();
 MAIN: while (1) {
 #pragma HLS PIPELINE rewind
     PREAMBLE: for (i = 0; i < PREAMBLE_CNT; i++) {
+#pragma HLS UNROLL
+#pragma HLS LATENCY max=0 min=0
             gmii_data_out(PREAMBLE_CHAR);
         }
         ap_uint<32> crc_state = 0xffffffff;
@@ -72,20 +68,19 @@ MAIN: while (1) {
 
     DATA: while(!din.last){
 #pragma HLS LATENCY max=0 min=0
-            ap_uint<8> data;
-
-            fcs_cover_gmii_data_out(din.data, din.user, &frm_err, &frm_cnt, &crc_state, m_gmii);
+            fcs_cover_gmii_data_out(din.data, din.user);
             if (!s_axis.read_nb(din)) return;
         }
 
-        fcs_cover_gmii_data_out(din.data, din.user, &frm_err, &frm_cnt, &crc_state, m_gmii);
+        fcs_cover_gmii_data_out(din.data, din.user);
 
     PAD: while (frm_cnt < 60) {
-            fcs_cover_gmii_data_out((ap_uint<8>) 0x00, 0, &frm_err, &frm_cnt, &crc_state, m_gmii);
+#pragma HLS LATENCY max=0 min=0
+            fcs_cover_gmii_data_out((ap_uint<8>) 0x00, 0);
         }
 
     FCS: for (i = 0; i < 4; i++) {
-#pragma HLS LATENCY max=0 min=0
+#pragma HLS UNROLL
             gmii_data_out((~crc_state) & 0xff);
             frm_cnt++;
             crc_state >>= 8;
